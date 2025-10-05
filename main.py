@@ -1,5 +1,7 @@
 import json
 import os
+from typing import Tuple
+
 import typer
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -108,7 +110,7 @@ def listen(path: str, prefix: str = ""):
     filename = os.path.basename(path)
     dirname = os.path.join(output_dir, prefix, os.path.splitext(filename)[0])
 
-    def process(text: str, index: int) -> (str, int, str):
+    def process(text: str, index: int) -> Tuple[str, int, str]:
         file_path = os.path.join(dirname, f"{filename}-{index}.mp3")
         typer.echo(f"Processing chunk {index} with {len(text)} characters")
         with typer.progressbar(length=100) as bar:
@@ -144,33 +146,20 @@ def listen(path: str, prefix: str = ""):
     # collect and chunk everything into a max of 4096 characters
     chunk = ""
     idx = 0
-    # playlist = []
     for chapter in data["chapters"]:
         if len(chunk) > 4000: # max context length for gpt-4o-mini-tts is 4096
             chunk, idx, saved_file = process(chunk, idx)
-            # playlist.append(saved_file)
         chunk += f"Chapter: {chapter['title']}\n"
-        # typer.echo(f"Chapter: {chapter['title']}")
         for section in chapter["sections"]:
             if len(chunk) + len(section["title"]) > 4000:
                 chunk, idx, saved_file = process(chunk, idx)
-                # playlist.append(saved_file)
             chunk += f"  Section: {section['title']}\n"
             for segment in section["segments"]:
                 if len(chunk) + len(segment["text"]) > 4000:
                     chunk, idx, saved_file = process(chunk, idx)
-                    # playlist.append(saved_file)
                 chunk += f"{segment['text']}\n"
 
     chunk, idx, saved_file = process(chunk, idx)
-    # playlist.append(saved_file)
-
-    # write a playlist file
-    # playlist_path = f"{dirname}.m3u"
-    # with open(playlist_path, "w") as f:
-    #     for item in playlist:
-    #         f.write(f"{item}\n")
-    # typer.echo(f"Wrote playlist to {playlist_path}")
 
     typer.echo(f"Wrote {idx+1} audio files to {dirname}")
 
