@@ -12,6 +12,8 @@ It uses the **OpenAI Responses API** for intelligent text extraction and **OpenA
 - 🔊 Converts structured text into high-quality speech segments  
 - ⚙️ Configurable models and output paths via `.env`  
 - 🧰 Simple CLI built with [Typer](https://typer.tiangolo.com/)  
+- 🪄 `convert` and `summarize` commands for one-step workflows  
+- 🎼 Generates `.m3u` playlists for seamless audiobook playback  
 
 ---
 
@@ -50,7 +52,8 @@ Create a `.env` file in the project root with your API credentials and defaults:
 
 ```bash
 OPENAI_API_KEY=sk-...
-OPENAI_PROMPT="Extract an audiobook-ready transcript from a PDF and return segmented JSON for text-to-speech...."
+OPENAI_CONVERT_PROMPT="Extract an audiobook-ready transcript from a PDF and return segmented JSON for text-to-speech."
+OPENAI_CONDENSE_PROMPT="Summarize this document into concise audiobook-ready text with clear sections and key points."
 OPENAI_RESPONSES_MODEL=gpt-5-mini
 OPENAI_VOICE_MODEL=gpt-4o-mini-tts
 OPENAI_VOICE=alloy
@@ -64,10 +67,16 @@ You can customize these defaults anytime — for example, swap the `OPENAI_VOICE
 ## 🚀 Usage
 
 ### 🗂️ Step 1: Extract the text
+to get a structured transcript:
 ```bash
 python main.py load path/to/document.pdf
 ```
-This uploads the PDF, sends it to the OpenAI Responses API with your chosen prompt, and saves a structured JSON transcript to:
+or, for a condensed summary:
+```bash
+python main.py condense path/to/document.pdf
+```
+
+Uploads the PDF and saves a structured JSON transcript to:
 ```
 ./output/<document-name>/output.txt
 ```
@@ -78,10 +87,11 @@ This uploads the PDF, sends it to the OpenAI Responses API with your chosen prom
 ```bash
 python main.py listen path/to/document.pdf
 ```
-This reads the JSON transcript and streams generated MP3 files for each text chunk into:
+Reads the transcript and generates MP3 files for each text chunk into:
 ```
 ./output/<document-name>/
 ```
+
 Each segment is saved as:
 ```
 <document-name>-0.mp3
@@ -89,6 +99,34 @@ Each segment is saved as:
 <document-name>-2.mp3
 ...
 ```
+
+---
+
+### 🎶 Step 3: Generate the playlist
+```bash
+python main.py playlist path/to/document.pdf
+```
+Creates an `.m3u` playlist file for playback:
+```
+./output/<document-name>/<document-name>.m3u
+```
+
+---
+
+### ⚡ One-step full conversion
+```bash
+python main.py convert path/to/document.pdf
+```
+Runs all steps (`load`, `listen`, and `playlist`) sequentially to create a complete audiobook.
+
+---
+
+### 🧭 Summarize instead of convert
+```bash
+python main.py summarize path/to/document.pdf
+```
+Generates a **condensed audiobook** version using the `OPENAI_CONDENSE_PROMPT`.  
+Perfect for executive summaries or research papers.
 
 ---
 
@@ -124,8 +162,18 @@ pip install typer python-dotenv pydantic openai
 ```bash
 python main.py load ./samples/whitepaper.pdf
 python main.py listen ./samples/whitepaper.pdf
+python main.py playlist ./samples/whitepaper.pdf
 ```
-Then play the generated audio in your favorite media player 🎧
+
+Or, for a complete conversion in one go:
+```bash
+python main.py convert ./samples/whitepaper.pdf 
+```
+
+To summarize instead:
+```bash
+python main.py summarize ./samples/whitepaper.pdf 
+```
 
 ---
 
@@ -133,7 +181,9 @@ Then play the generated audio in your favorite media player 🎧
 
 - The Responses API may take several minutes for large PDFs.  
 - Each TTS segment is capped at ~4,000 characters for `gpt-4o-mini-tts`.  
-- Output is structured as chapters → sections → segments for clarity.  
+- Output is structured as chapters → sections → segments.  
+- Progress bars are displayed during both transcription and audio generation.  
+- All outputs are stored in subfolders under your defined `OUTPUT_DIR`.  
 
 ---
 
