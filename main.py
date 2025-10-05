@@ -120,6 +120,7 @@ def listen(path: str, prefix: str = ""):
                     input=text
             ) as response:
                 response.stream_to_file(file_path)
+                typer.echo(f"Token usage: {response.usage.model_dump_json(indent=2)}")
             bar.update(100)
         return "", index + 1, file_path
 
@@ -170,7 +171,7 @@ def listen(path: str, prefix: str = ""):
 def playlist(path: str, prefix: str = ""):
 
     filename =  os.path.splitext(os.path.basename(path))[0]
-    dirname = os.path.join(output_dir, prefix, os.path.splitext(filename)[0])
+    dirname = os.path.join(output_dir, prefix, filename)
 
     if not os.path.exists(dirname):
         raise ValueError(f"Directory {dirname} does not exist")
