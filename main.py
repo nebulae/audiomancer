@@ -187,7 +187,8 @@ def playlist(path: str, prefix: str = ""):
         raise ValueError(f"Directory {dirname} does not exist")
 
     playlist = []
-    for file in sorted(os.listdir(dirname), key=lambda x: os.path.getctime(os.path.join(dirname, x))):
+    files = [(file, os.path.join(dirname, file)) for file in os.listdir(dirname)]
+    for file, full_path in sorted(files, key=lambda x: os.path.getctime(x[1])):
         if file.endswith(".mp3"):
             playlist.append(file)
 
