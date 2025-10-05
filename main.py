@@ -120,7 +120,7 @@ def listen(path: str, prefix: str = ""):
                     input=text
             ) as response:
                 response.stream_to_file(file_path)
-                typer.echo(f"Token usage: {response.usage.model_dump_json(indent=2)}")
+                # typer.echo(f"Token usage: {response.usage.model_dump_json(indent=2)}")
             bar.update(100)
         return "", index + 1, file_path
 
@@ -176,16 +176,16 @@ def playlist(path: str, prefix: str = ""):
     if not os.path.exists(dirname):
         raise ValueError(f"Directory {dirname} does not exist")
 
-    playlist = []
+    pls = []
     files = [(file, os.path.join(dirname, file)) for file in os.listdir(dirname)]
     for file, full_path in sorted(files, key=lambda x: os.path.getctime(x[1])):
         if file.endswith(".mp3"):
-            playlist.append(file)
+            pls.append(file)
 
     # write a playlist file
     playlist_path = os.path.join(dirname, f"{filename}.m3u")
     with open(playlist_path, "w") as f:
-        for item in playlist:
+        for item in pls:
             f.write(f"{item}\n")
     typer.echo(f"Wrote playlist to {playlist_path}")
 
