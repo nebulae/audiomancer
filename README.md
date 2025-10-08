@@ -13,6 +13,7 @@ It uses the **OpenAI Responses API** for intelligent text extraction and **OpenA
 - ⚙️ Configurable models and output paths via `.env`  
 - 🧰 Simple CLI built with [Typer](https://typer.tiangolo.com/)  
 - 🪄 `convert` and `summarize` commands for one-step workflows  
+- 
 - 🎼 Generates `.m3u` playlists for seamless audiobook playback  
 
 ---
@@ -111,7 +112,15 @@ Creates an `.m3u` playlist file for playback:
 ./output/<document-name>/<document-name>.m3u
 ```
 
+### 🗜️ Step 4: Smash into one mp3, if desired
+this will concatenate all segments into a single file, and delete the individual segments:
+```bash
+python main.py smash path/to/document.pdf
 ---
+creates:
+./output/<document-name>/<document-name>-full.mp3
+```
+
 
 ### ⚡ One-step full conversion
 ```bash
@@ -121,10 +130,21 @@ Runs all steps (`load`, `listen`, and `playlist`) sequentially to create a compl
 
 ---
 
+to create one mp3 from all segments:
+```bash
+python main.py convert --into-one-mp3 path/to/document.pdf
+```
+
 ### 🧭 Summarize instead of convert
 ```bash
 python main.py summarize path/to/document.pdf
 ```
+
+to create one mp3 from all segments:
+```bash
+python main.py summarize --into-one-mp3 path/to/document.pdf
+```
+
 Generates a **condensed audiobook** version using the `OPENAI_CONDENSE_PROMPT`.  
 Perfect for executive summaries or research papers.
 
