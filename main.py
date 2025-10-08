@@ -120,7 +120,7 @@ def listen(path: str, prefix: str = ""):
                     input=text
             ) as response:
                 response.stream_to_file(file_path)
-                typer.echo(f"Token usage: {response.usage.model_dump_json(indent=2)}")
+                # typer.echo(f"Token usage: {response.usage.model_dump_json(indent=2)}")
             bar.update(100)
         return "", index + 1, file_path
 
@@ -176,30 +176,64 @@ def playlist(path: str, prefix: str = ""):
     if not os.path.exists(dirname):
         raise ValueError(f"Directory {dirname} does not exist")
 
-    playlist = []
+    pls = []
     files = [(file, os.path.join(dirname, file)) for file in os.listdir(dirname)]
     for file, full_path in sorted(files, key=lambda x: os.path.getctime(x[1])):
         if file.endswith(".mp3"):
-            playlist.append(file)
+            pls.append(file)
 
     # write a playlist file
     playlist_path = os.path.join(dirname, f"{filename}.m3u")
     with open(playlist_path, "w") as f:
-        for item in playlist:
+        for item in pls:
             f.write(f"{item}\n")
     typer.echo(f"Wrote playlist to {playlist_path}")
 
 @app.command()
-def convert(path: str):
-    load(path, "converted")
-    listen(path, "converted")
-    playlist(path, "converted")
+def smash(path: str, prefix: str = ""):
+    # smash all the mp3 files into one
+    filename = os.path.splitext(os.path.basename(path))[0]
+    dirname = os.path.join(output_dir, prefix, filename)
+    if not os.path.exists(dirname):
+        raise ValueError(f"Directory {dirname} does not exist")
+    from pydub import AudioSegment
+    combined = AudioSegment.empty()
+    files = [(file, os.path.join(dirname, file)) for file in os.listdir(dirname)]
+    for file, full_path in sorted(files, key=lambda x: os.path.getctime(x[1])):
+        if file.endswith(".mp3"):
+            typer.echo(f"Adding {file} to combined audio")
+            audio = AudioSegment.from_mp3(full_path)
+            combined += audio
+    output_path = os.path.join(dirname, f"{filename}-full.mp3")
+    combined.export(output_path, format="mp3")
+    typer.echo(f"Wrote combined audio to {output_path}")
+
+    # delete the individual files
+    for file, full_path in files:
+        if file.endswith(".mp3") and not file.endswith("-full.mp3"):
+            os.remove(full_path)
+            typer.echo(f"Deleted {file}")
+
+
 
 @app.command()
-def summarize(path: str):
+def convert(path: str, into_one_mp3: bool = False):
+    load(path, "converted")
+    listen(path, "converted")
+    if not into_one_mp3:
+        playlist(path, "converted")
+    else:
+        smash(path, "converted")
+
+@app.command()
+def summarize(path: str, into_one_mp3: bool = False):
     condense(path, "condensed")
     listen(path, "condensed")
-    playlist(path, "condensed")
+    if not into_one_mp3:
+        playlist(path, "condensed")
+    else:
+        smash(path, "condensed")
+
 
 
 if __name__ == "__main__":
