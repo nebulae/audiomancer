@@ -204,13 +204,13 @@ def smash(path: str, prefix: str = ""):
             typer.echo(f"Adding {file} to combined audio")
             audio = AudioSegment.from_mp3(full_path)
             combined += audio
-    output_path = os.path.join(dirname, f"{filename}-combined.mp3")
+    output_path = os.path.join(dirname, f"{filename}-full.mp3")
     combined.export(output_path, format="mp3")
     typer.echo(f"Wrote combined audio to {output_path}")
 
     # delete the individual files
     for file, full_path in files:
-        if file.endswith(".mp3") and not file.endswith("-combined.mp3"):
+        if file.endswith(".mp3") and not file.endswith("-full.mp3"):
             os.remove(full_path)
             typer.echo(f"Deleted {file}")
 
