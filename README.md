@@ -13,7 +13,6 @@ It uses the **OpenAI Responses API** for intelligent text extraction and **OpenA
 - ⚙️ Configurable models and output paths via `.env`  
 - 🧰 Simple CLI built with [Typer](https://typer.tiangolo.com/)  
 - 🪄 `convert` and `summarize` commands for one-step workflows  
-- 
 - 🎼 Generates `.m3u` playlists for seamless audiobook playback  
 
 ---
