@@ -229,7 +229,6 @@ def convert(path: str, into_one_mp3: bool = False):
 def summarize(path: str, into_one_mp3: bool = False):
     condense(path, "condensed")
     listen(path, "condensed")
-    playlist(path, "condensed")
     if not into_one_mp3:
         playlist(path, "condensed")
     else:
