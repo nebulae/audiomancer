@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audiomancer"
+version = "0.1.0"
+description = "Convert/condense PDFs and generate TTS audio"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "typer>=0.12.0",
+  "python-dotenv>=1.0.0",
+  "pydantic>=2.6.0",
+  "pydub>=0.25.1",
+  "openai>=1.40.0",
+  "transformers>=4.44.0",
+  "torch>=2.4.0",         # match to your CUDA/CPU
+  "pypdf>=4.2.0",
+  "kernels>=0.0.7"        # optional perf, see model card
+]
+
+[project.scripts]
+audiomancer = "audiomancer.cli:app"
