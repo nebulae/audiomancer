@@ -80,6 +80,35 @@ def write_reading_note(dest_dir: str, note: ReadingNote) -> Tuple[str, str]:
 
     return md_path, json_path
 
+
+def format_reading_note_for_audio(note: ReadingNote) -> str:
+    """Render a reading note into a narratable script for TTS."""
+
+    def _clean(items: List[str]) -> List[str]:
+        return [item.strip() for item in items if item and item.strip()]
+
+    lines: List[str] = [
+        "Reading note.",
+        f"Citation: {note.citation.strip()}",
+        f"Argument: {note.argument.strip()}",
+    ]
+
+    main_points = _clean(note.main_points)
+    if main_points:
+        lines.append("Main points:")
+        for idx, point in enumerate(main_points, 1):
+            lines.append(f"{idx}. {point}")
+
+    evidence_items = _clean(note.evidence)
+    if evidence_items:
+        lines.append("Evidence cited:")
+        for idx, item in enumerate(evidence_items, 1):
+            lines.append(f"{idx}. {item}")
+
+    lines.append(f"Assessment: {note.assessment.strip()}")
+
+    return "\n".join(lines)
+
 def list_audio_by_ctime(dir_path: str) -> List[str]:
     files = [(fn, os.path.join(dir_path, fn)) for fn in os.listdir(dir_path)]
     files = sorted(files, key=lambda x: os.path.getctime(x[1]))

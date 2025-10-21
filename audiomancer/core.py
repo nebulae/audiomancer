@@ -14,6 +14,8 @@ from .io_utils import (
     read_textresponse,
     list_audio_by_ctime,
     write_reading_note,
+    format_reading_note_for_audio,
+    file_stem,
 )
 
 from .backends import run_oss_transcript
@@ -140,6 +142,21 @@ def create_reading_note(path: str, prefix: str, *, backend: str = "api") -> Read
     parts.extend(note.evidence)
     approx_words = sum(len(p.split()) for p in parts)
     typer.echo(f"Approximate word count: {approx_words} words")
+
+    narration = format_reading_note_for_audio(note)
+    if len(narration) > TTS_MAX_CHARS:
+        raise ValueError("Reading note narration exceeds single-chunk TTS limit")
+
+    audio_path = os.path.join(out_dir, f"{file_stem(path)}-reading-note.mp3")
+    typer.echo(f"Generating reading note audio ({len(narration)} characters)")
+    with typer.progressbar(length=100) as bar:
+        with _client.audio.speech.with_streaming_response.create(
+            model=VOICE_MODEL, voice=VOICE_FLAVOR, input=narration
+        ) as response:
+            response.stream_to_file(audio_path)
+        bar.update(100)
+
+    typer.echo(f"Wrote reading note audio to {audio_path}")
 
     return note
 
