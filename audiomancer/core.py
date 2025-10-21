@@ -6,13 +6,16 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.responses import EasyInputMessageParam, ResponseInputFileParam
 
-from .models import TextResponse
+from .models import TextResponse, ReadingNote
 from .io_utils import (
     build_output_dir,
     ensure_dir,
     write_json_textresponse,
     read_textresponse,
     list_audio_by_ctime,
+    write_reading_note,
+    format_reading_note_for_audio,
+    file_stem,
 )
 
 from .backends import run_oss_transcript
@@ -35,6 +38,10 @@ if not PROMPT_CONVERT:
 PROMPT_CONDENSE = os.getenv("OPENAI_CONDENSE_PROMPT")
 if not PROMPT_CONDENSE:
     raise ValueError("OPENAI_CONDENSE_PROMPT environment variable not set")
+
+PROMPT_READING_NOTE = os.getenv("OPENAI_READING_NOTE_PROMPT")
+if not PROMPT_READING_NOTE:
+    raise ValueError("OPENAI_READING_NOTE_PROMPT environment variable not set")
 
 RESPONSES_MODEL = os.getenv("OPENAI_RESPONSES_MODEL", "gpt-5-mini")
 VOICE_MODEL = os.getenv("OPENAI_VOICE_MODEL", "gpt-4o-mini-tts")
@@ -99,6 +106,59 @@ def transcript(prompt: str, path: str, prefix: str, *, backend: str = "api",
     ensure_dir(out_dir)
     write_json_textresponse(out_dir, data)
     return data
+
+
+def create_reading_note(path: str, prefix: str, *, backend: str = "api") -> ReadingNote:
+    if backend != "api":
+        raise ValueError("Reading note generation currently requires backend='api'")
+
+    typer.echo(f"Loading file at {path}")
+    pdf = _upload_pdf(path)
+    typer.echo(f"Uploaded file, id: {pdf.id}")
+
+    input_message = _make_input(pdf.id, PROMPT_READING_NOTE)
+    typer.echo("Drafting reading note...")
+
+    with typer.progressbar(length=100) as bar:
+        resp = _client.responses.parse(
+            model=RESPONSES_MODEL,
+            input=[input_message],
+            text_format=ReadingNote,
+        )
+        bar.update(100)
+
+    note = resp.output_parsed
+    typer.echo(f"Token usage: {resp.usage.model_dump_json(indent=2)}")
+
+    out_dir = build_output_dir(path, prefix=prefix)
+    ensure_dir(out_dir)
+    md_path, json_path = write_reading_note(out_dir, note)
+    typer.echo(f"Wrote reading note to {md_path}")
+    typer.echo(f"Wrote structured JSON to {json_path}")
+
+    # Rough word count for operator awareness
+    parts = [note.citation, note.argument, note.assessment]
+    parts.extend(note.main_points)
+    parts.extend(note.evidence)
+    approx_words = sum(len(p.split()) for p in parts)
+    typer.echo(f"Approximate word count: {approx_words} words")
+
+    narration = format_reading_note_for_audio(note)
+    if len(narration) > TTS_MAX_CHARS:
+        raise ValueError("Reading note narration exceeds single-chunk TTS limit")
+
+    audio_path = os.path.join(out_dir, f"{file_stem(path)}-reading-note.mp3")
+    typer.echo(f"Generating reading note audio ({len(narration)} characters)")
+    with typer.progressbar(length=100) as bar:
+        with _client.audio.speech.with_streaming_response.create(
+            model=VOICE_MODEL, voice=VOICE_FLAVOR, input=narration
+        ) as response:
+            response.stream_to_file(audio_path)
+        bar.update(100)
+
+    typer.echo(f"Wrote reading note audio to {audio_path}")
+
+    return note
 
 def text_to_speech_for_dir(input_pdf_path: str, prefix: str) -> str:
     filename = os.path.basename(input_pdf_path)

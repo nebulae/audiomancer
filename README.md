@@ -50,6 +50,7 @@ Audiomancer reads its configuration from environment variables (loaded automatic
 | `OPENAI_API_KEY` | OpenAI API key used for both text and audio requests. |
 | `OPENAI_CONVERT_PROMPT` | System/user instructions describing how to create full transcripts. |
 | `OPENAI_CONDENSE_PROMPT` | Instructions for condensed/summarized transcripts. |
+| `OPENAI_READING_NOTE_PROMPT` | Guidance for drafting 300-word reading notes following the required template. |
 
 These have sensible defaults but can be overridden:
 
@@ -68,6 +69,7 @@ Create a `.env` file in the project root to keep these values together:
 OPENAI_API_KEY=sk-...
 OPENAI_CONVERT_PROMPT="...full transcript prompt..."
 OPENAI_CONDENSE_PROMPT="...summary transcript prompt..."
+OPENAI_READING_NOTE_PROMPT="...reading note prompt..."
 OPENAI_RESPONSES_MODEL=gpt-5-mini
 OPENAI_VOICE_MODEL=gpt-4o-mini-tts
 OPENAI_VOICE=alloy
@@ -98,6 +100,7 @@ Options:
 | `condense PATH` | Run the condensation prompt against a PDF (or every PDF in a directory). Outputs to `OUTPUT_DIR/condensed/...`. |
 | `convert PATH` | Full pipeline: transcript → TTS chunks → playlist (or single MP3 with `--one`). Works on a single PDF or directory. |
 | `summarize PATH` | Full condensation pipeline: condensed transcript → audio → playlist or single MP3. |
+| `reading-note PATH` | Generate a formatted reading note (Markdown + JSON + MP3) capped at roughly 300 words. |
 | `listen PATH` | Convert an existing transcript directory into MP3 chunks. |
 | `playlist PATH` | Build an `.m3u` playlist from generated chunks. |
 | `smash PATH` | Merge MP3 chunks into `<stem>-full.mp3` and remove the smaller files. |

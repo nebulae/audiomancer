@@ -1,8 +1,8 @@
 import json
 import os
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
-from .models import TextResponse
+from .models import TextResponse, ReadingNote
 
 DEFAULT_OUTPUT_DIR = os.getenv("OUTPUT_DIR", "../.output")
 
@@ -31,6 +31,83 @@ def read_textresponse(input_dir: str) -> TextResponse:
     with open(input_path, "r") as f:
         raw = json.load(f)
     return TextResponse.model_validate(raw)
+
+
+def write_reading_note(dest_dir: str, note: ReadingNote) -> Tuple[str, str]:
+    ensure_dir(dest_dir)
+
+    json_path = os.path.join(dest_dir, "reading_note.json")
+    with open(json_path, "w") as f:
+        f.write(note.model_dump_json(indent=2))
+
+    md_path = os.path.join(dest_dir, "reading_note.md")
+    lines: List[str] = [
+        "# Reading Note",
+        "",
+        "## Citation",
+        note.citation.strip(),
+        "",
+        "## Argument",
+        note.argument.strip(),
+        "",
+        "## Main Points",
+    ]
+
+    for point in note.main_points:
+        point = point.strip()
+        if point:
+            lines.append(f"- {point}")
+
+    lines.extend([
+        "",
+        "## Evidence",
+    ])
+
+    for item in note.evidence:
+        item = item.strip()
+        if item:
+            lines.append(f"- {item}")
+
+    lines.extend([
+        "",
+        "## Assessment",
+        note.assessment.strip(),
+        "",
+    ])
+
+    with open(md_path, "w") as f:
+        f.write("\n".join(lines).strip() + "\n")
+
+    return md_path, json_path
+
+
+def format_reading_note_for_audio(note: ReadingNote) -> str:
+    """Render a reading note into a narratable script for TTS."""
+
+    def _clean(items: List[str]) -> List[str]:
+        return [item.strip() for item in items if item and item.strip()]
+
+    lines: List[str] = [
+        "Reading note.",
+        f"Citation: {note.citation.strip()}",
+        f"Argument: {note.argument.strip()}",
+    ]
+
+    main_points = _clean(note.main_points)
+    if main_points:
+        lines.append("Main points:")
+        for idx, point in enumerate(main_points, 1):
+            lines.append(f"{idx}. {point}")
+
+    evidence_items = _clean(note.evidence)
+    if evidence_items:
+        lines.append("Evidence cited:")
+        for idx, item in enumerate(evidence_items, 1):
+            lines.append(f"{idx}. {item}")
+
+    lines.append(f"Assessment: {note.assessment.strip()}")
+
+    return "\n".join(lines)
 
 def list_audio_by_ctime(dir_path: str) -> List[str]:
     files = [(fn, os.path.join(dir_path, fn)) for fn in os.listdir(dir_path)]

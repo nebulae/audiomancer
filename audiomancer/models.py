@@ -15,3 +15,11 @@ class Chapter(BaseModel):
 
 class TextResponse(BaseModel):
     chapters: List[Chapter]
+
+
+class ReadingNote(BaseModel):
+    citation: str
+    argument: str
+    main_points: List[str]
+    evidence: List[str]
+    assessment: str

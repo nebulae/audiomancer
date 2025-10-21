@@ -10,6 +10,7 @@ from .core import (
     smash_into_one,
     convert_flow,
     summarize_flow,
+    create_reading_note,
     PROMPT_CONVERT,
     PROMPT_CONDENSE,
 )
@@ -139,6 +140,22 @@ def summarize(
         oss_device_map=oss_device_map,
         oss_torch_dtype=oss_dtype,
     )
+
+
+@app.command(help="Create a structured reading note (≤300 words) for a PDF")
+def reading_note(
+    path: str,
+    prefix: str = "",
+    backend: str = "api",
+):
+    try:
+        create_reading_note(
+            path,
+            prefix or "reading-notes",
+            backend=backend,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
 
 @app.command(help="Turn a previously produced structured text into MP3 chunks")
 def listen(path: str, prefix: str = ""):
